@@ -8,7 +8,7 @@ const mqtt=require("mqtt")
  * mqtt服务自行构建，推荐使用emqtt
  */
 const client=mqtt.connect('mqtt://127.0.0.1:1883')
-client
+// client
 
 
 app.get("/", function(req, res) {
