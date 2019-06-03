@@ -12,11 +12,11 @@ function socketFuc(server) {
             // socket.emit("join", msg);
         });
 
-        socket.on("chat message", function(msg) {
-            console.log("用户发送msg: " + msg);
-            const inof = `Server_${msg}`;
+        socket.on("chat message", function(data) {
+            console.log("用户发送msg: " + data);
+            const inof = `${data.user}:${data.msg}`;
             console.log(inof);
-            io.sockets.emit("serverMessages", inof);
+            io.sockets.emit("serverMessages", data);
         });
     });
 }

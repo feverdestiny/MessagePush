@@ -97,6 +97,23 @@
         #messages li:nth-child(odd) {
             background: #eee;
         }
+
+        .welecome {
+            text-align: center;
+            font-size: 16px;
+            color: #03A9F4
+        }
+
+        .servemessage {
+            margin: 10px;
+        }
+
+        .servemessage .user {
+            font-size: 18px;
+            font-weight: bold;
+            color: green;
+            padding: 0 5px;
+        }
     </style>
 </head>
 
@@ -120,27 +137,34 @@
 <script>
     $(function () {
         const serverIp = "http://127.0.0.1:3000"
+        let user = undefined;
         var socket = io(serverIp);
         socket.on('connect', () => {
             console.log('sokce 连接成功！')
         })
         socket.on('join', (msg) => {
             console.log("join", msg);
-            $('#messages').append(`<p>welecome ${msg} to chart </p>`)
+            $('#messages').append(`<p class="welecome">Welecome ${msg} to chart </p>`)
         })
-        socket.on('serverMessages', function (msg) {
-            console.log(msg)
-            $('#messages').append(`<p>${msg}</p>`)
+        socket.on('serverMessages', function (data) {
+            console.log(data)
+            $('#messages').append(
+                `<p class="servemessage"><span class="user">${data.user}:</span>${data.msg}</p>`)
         })
         $('#login').submit((e) => {
             e.preventDefault(); // prevents page reloading
-            socket.emit('login', $('#username').val());
+            user = $('#username').val()
+            socket.emit('login', user);
             $('#user').hide();
         })
 
         $('#chat').submit(function (e) {
             e.preventDefault(); // prevents page reloading
-            socket.emit('chat message', $('#usermessage').val());
+            const data = {
+                user: user,
+                msg: $('#usermessage').val()
+            }
+            socket.emit('chat message', data);
             $('#usermessage').val('');
             return false;
         });
