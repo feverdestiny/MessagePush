@@ -11,7 +11,14 @@ client.on("connect", function() {
     const name = "mqttTopic";
     client.subscribe(name, function(err) {
         if (!err) {
-            client.publish(name, `${name} connect success!`);
+            setInterval(() => {
+                client.publish(
+                    name,
+                    `${name} message to ${Math.random()
+                        .toString(16)
+                        .substr(2, 8)}`
+                );
+            }, 300);
         }
     });
 });
@@ -42,6 +49,5 @@ client.on("disconnect", function() {
 });
 
 client.on("message", function(topic, message, packet) {
-    console.log("Topic:", topic);
-    console.log("Message:", message);
+    console.log(`${topic}_Message:`, message.toString());
 });

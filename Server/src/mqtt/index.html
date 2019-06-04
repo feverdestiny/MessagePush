@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <script src="./lib/socket.io.js"></script>
     <script src="./lib/jquery.min.js"></script>
-    <title>Websocket</title>
+    <script src="./lib/paho_mqtt.js"></script>
+    <title>Mqtt</title>
     <style>
         * {
             margin: 0;
@@ -114,60 +114,90 @@
             color: green;
             padding: 0 5px;
         }
+
+        #content {
+            height: 400px;
+            overflow: auto;
+        }
     </style>
 </head>
 
 <body>
-    <div id='user'>
-        <div id="name">
-            <form id="login" action="">
-                <input id="username" placeholder="Enter your user name" autocomplete="off" /><button>Login</button>
-            </form>
-        </div>
-
-    </div>
     <div>
-        <ul id="messages"></ul>
-        <form id="chat" action="">
-            <input type="text" id="usermessage" autocomplete="off" /><button>Send</button>
-        </form>
+        <input id="input" value="mqttTopic" />
+        <button id="button">订阅主题</button>
+
+        <div id="content"></div>
     </div>
 
 </body>
 <script>
     $(function () {
-        const serverIp = "http://127.0.0.1:3000"
-        let user = undefined;
-        var socket = io(serverIp);
-        socket.on('connect', () => {
-            console.log('sokce 连接成功！')
-        })
-        socket.on('join', (msg) => {
-            console.log("join", msg);
-            $('#messages').append(`<p class="welecome">Welecome ${msg} to chart </p>`)
-        })
-        socket.on('serverMessages', function (data) {
-            console.log(data)
-            $('#messages').append(
-                `<p class="servemessage"><span class="user">${data.user}:</span>${data.msg}</p>`)
-        })
-        $('#login').submit((e) => {
-            e.preventDefault(); // prevents page reloading
-            user = $('#username').val()
-            socket.emit('login', user);
-            $('#user').hide();
+        const clientId = 'webmqtt_' + Math.random().toString(16).substr(2, 8)
+        const client = new Paho.Client(
+            '127.0.0.1',
+            8083,
+            clientId
+        );
+        client.connect({
+            userName: "",
+            password: "",
+            cleanSession: true,
+            reconnect: true,
+            mqttVersion: 4,
+            onSuccess: function () {
+                console.log("连接成功");
+            },
+            onFailure: function () {
+                IsConnent = false;
+                console.log("连接失败");
+            }
+        });
+        const event = () => {
+            // console.log('========================================ddddd')
+            client.onConnected = function () {
+                IsConnent = true;
+                console.log(`建立连接成功，连接clientId：${clientId}`);
+
+                // client.subscribe([topic], {
+                //   qos: 2,
+                //   onSuccess: function() {
+                //     console.log(`消息订阅成功${topic}`);
+                //   },
+                //   onFailure: function() {
+                //     console.log("消息订阅失败");
+                //   }
+                // });
+            };
+
+            client.onConnectionLost = function (responseObject) {
+                IsConnent = false;
+                console.log("客户端离线");
+            };
+
+            client.onMessageArrived = function (payload) {
+                console.log(`MQTT:${payload.topic}`, payload.payloadString);
+                $('#content').append(`<p>${payload.payloadString}</p>`)
+            };
+        };
+        event();
+
+        $('#button').click(function () {
+            const topic = $('#input').val();
+            // client
+            client.subscribe([topic], {
+                qos: 2,
+                onSuccess: function () {
+                    console.log(`消息订阅成功${topic}`);
+                },
+                onFailure: function () {
+                    console.log("消息订阅失败");
+                }
+            });
         })
 
-        $('#chat').submit(function (e) {
-            e.preventDefault(); // prevents page reloading
-            const data = {
-                user: user,
-                msg: $('#usermessage').val()
-            }
-            socket.emit('chat message', data);
-            $('#usermessage').val('');
-            return false;
-        });
+
+
     })
 </script>
 
